@@ -17,15 +17,15 @@ func main() {
 	clientKey := os.Getenv("TWITCH_CLIENT")
 	secret := os.Getenv("TWITCH_SECRET")
 
-	log.Printf("%s\n%s", clientKey, secret)
-
 	client = twitch.NewClient(clientKey, secret, "http://localhost:8080/authorized")
 	r := chi.NewRouter()
 
-	r.Get("/", client.Authorize("openid", "user_read"))
+	r.Get("/", client.Authorize("openid", "user_read", "user_subscriptions", "user_follows_edit", "user_blocks_edit"))
 	r.Get("/authorized", client.HandleAuthorization(handleAccess))
 	r.Get("/user", handleGetUser)
+	r.Get("/test", handleTest)
 
+	log.Println("Starting server...")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
@@ -48,6 +48,37 @@ func handleGetUser(w http.ResponseWriter, r *http.Request) {
 	data, err := json.Marshal(&user)
 	if err != nil {
 		log.Printf("Failed to marshal response: %s", err)
+	}
+
+	w.Write(data)
+}
+
+func handleTest(w http.ResponseWriter, r *http.Request) {
+	scope := []string{
+		"openid",
+		"user_read",
+		"user_subscriptions",
+		"user_follows_edit",
+		"user_blocks_edit",
+	}
+
+	access := twitch.NewAccess("m724mn6yvu28rx61kxdkmedomsuu75", scope)
+	users, err := client.GetUsersByName("TehDotDev", "TehDot")
+	if err != nil {
+		log.Printf("Failed to get users: %s", err)
+	}
+
+	userID := users[0].ID
+	blockID := users[1].ID
+
+	block, err := client.WithAccess(access).BlockUser(userID, blockID)
+	if err != nil {
+		log.Printf("Failed to block: %s", err)
+	}
+
+	data, err := json.Marshal(&block)
+	if err != nil {
+		log.Printf("Failed to marshal json: %s")
 	}
 
 	w.Write(data)

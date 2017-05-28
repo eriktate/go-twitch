@@ -46,6 +46,14 @@ func NewClient(clientID, secret, redirectURI string) Client {
 	}
 }
 
+// NewAccess creates an Access struct from an existing token/scope combination.
+func NewAccess(token string, scope []string) Access {
+	return Access{
+		Token: token,
+		Scope: scope,
+	}
+}
+
 func (c Client) ClientID() string {
 	return c.clientID
 }
@@ -164,8 +172,36 @@ func (c Client) makePostRequest(uri string, payload []byte) (*http.Response, err
 	return httpClient.Do(req)
 }
 
-func (ac AccessClient) makePostRequest(uri, accessToken string, payload []byte) (*http.Response, error) {
+func (ac AccessClient) makePostRequest(uri string, payload []byte) (*http.Response, error) {
 	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("OAuth %s", ac.access.Token))
+	req.Header.Set("Client-ID", ac.client.ClientID())
+	req.Header.Set("Accept", "application/vnd.twitchtv.v5+json")
+	req.Header.Set("Content-Type", "application/json")
+
+	return httpClient.Do(req)
+}
+
+func (ac AccessClient) makePutRequest(uri string, payload []byte) (*http.Response, error) {
+	req, err := http.NewRequest("PUT", uri, bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("OAuth %s", ac.access.Token))
+	req.Header.Set("Client-ID", ac.client.ClientID())
+	req.Header.Set("Accept", "application/vnd.twitchtv.v5+json")
+	req.Header.Set("Content-Type", "application/json")
+
+	return httpClient.Do(req)
+}
+
+func (ac AccessClient) makeDeleteRequest(uri string) (*http.Response, error) {
+	req, err := http.NewRequest("DELETE", uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +213,7 @@ func (ac AccessClient) makePostRequest(uri, accessToken string, payload []byte) 
 	return httpClient.Do(req)
 }
 
-func (a Access) validateScope(scope string) error {
+func (a Access) ValidateScope(scope string) error {
 	for _, s := range a.Scope {
 		if s == scope {
 			return nil
@@ -185,4 +221,9 @@ func (a Access) validateScope(scope string) error {
 	}
 
 	return fmt.Errorf("Can not complete request because Access struct does not have '%s' scope", scope)
+}
+
+// helper function to call validateScope directly on the AccessClient.
+func (ac AccessClient) validateScope(scope string) error {
+	return ac.access.ValidateScope(scope)
 }
