@@ -10,7 +10,7 @@ import (
 	"github.com/pressly/chi"
 )
 
-var client *twitch.Client
+var client twitch.Client
 var clientAccess twitch.Access
 
 func main() {

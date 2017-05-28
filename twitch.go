@@ -34,32 +34,32 @@ type Access struct {
 // An AccessClient wraps a twitch client with an Access struct.
 type AccessClient struct {
 	access Access
-	client *Client
+	client Client
 }
 
 // NewClient creates a new Client for communicating with the Twitch API.
-func NewClient(clientID, secret, redirectURI string) *Client {
-	return &Client{
+func NewClient(clientID, secret, redirectURI string) Client {
+	return Client{
 		clientID:    clientID,
 		secret:      secret,
 		redirectURI: redirectURI,
 	}
 }
 
-func (c *Client) ClientID() string {
+func (c Client) ClientID() string {
 	return c.clientID
 }
 
-func (c *Client) Secret() string {
+func (c Client) Secret() string {
 	return c.secret
 }
 
-func (c *Client) RedirectURI() string {
+func (c Client) RedirectURI() string {
 	return c.redirectURI
 }
 
 // WithAccess wraps the Client with an Access struct.
-func (c *Client) WithAccess(access Access) AccessClient {
+func (c Client) WithAccess(access Access) AccessClient {
 	return AccessClient{
 		access: access,
 		client: c,
@@ -67,7 +67,7 @@ func (c *Client) WithAccess(access Access) AccessClient {
 }
 
 // Authorize is an http handler that can be used to prompt a user for Authorization.
-func (c *Client) Authorize(scope ...string) http.HandlerFunc {
+func (c Client) Authorize(scope ...string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authURI := c.getAuthorizeURI(scope)
 
@@ -76,7 +76,7 @@ func (c *Client) Authorize(scope ...string) http.HandlerFunc {
 }
 
 // HandleAuthorization handles collecting auth information after a successful auth attempt with Twitch. Once this handler is called, the Client struct should contain the user auth token and scope.
-func (c *Client) HandleAuthorization(handleAccess func(access Access, err error)) http.HandlerFunc {
+func (c Client) HandleAuthorization(handleAccess func(access Access, err error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
@@ -84,7 +84,7 @@ func (c *Client) HandleAuthorization(handleAccess func(access Access, err error)
 	}
 }
 
-func (c *Client) getAccessToken(authCode string) (Access, error) {
+func (c Client) getAccessToken(authCode string) (Access, error) {
 	var access Access
 	uri, _ := url.Parse(fmt.Sprintf("%s/oauth2/token", baseURI))
 	query := url.Values{}
@@ -114,7 +114,7 @@ func (c *Client) getAccessToken(authCode string) (Access, error) {
 	return access, nil
 }
 
-func (c *Client) getAuthorizeURI(scope []string) *url.URL {
+func (c Client) getAuthorizeURI(scope []string) *url.URL {
 	uri, _ := url.Parse(fmt.Sprintf("%s/oauth2/authorize", baseURI))
 	queryString := url.Values{}
 
@@ -127,7 +127,7 @@ func (c *Client) getAuthorizeURI(scope []string) *url.URL {
 	return uri
 }
 
-func (c *Client) makeGetRequest(uri string) (*http.Response, error) {
+func (c Client) makeGetRequest(uri string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err
@@ -139,7 +139,7 @@ func (c *Client) makeGetRequest(uri string) (*http.Response, error) {
 	return httpClient.Do(req)
 }
 
-func (ac *AccessClient) makeGetRequest(uri string) (*http.Response, error) {
+func (ac AccessClient) makeGetRequest(uri string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func (ac *AccessClient) makeGetRequest(uri string) (*http.Response, error) {
 	return httpClient.Do(req)
 }
 
-func (c *Client) makePostRequest(uri string, payload []byte) (*http.Response, error) {
+func (c Client) makePostRequest(uri string, payload []byte) (*http.Response, error) {
 	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (c *Client) makePostRequest(uri string, payload []byte) (*http.Response, er
 	return httpClient.Do(req)
 }
 
-func (ac *AccessClient) makePostRequest(uri, accessToken string, payload []byte) (*http.Response, error) {
+func (ac AccessClient) makePostRequest(uri, accessToken string, payload []byte) (*http.Response, error) {
 	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
