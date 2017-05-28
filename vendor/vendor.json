@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "BvfT3pAC+s5qn5nEDf0N7lxpBNg=",
+			"path": "github.com/pressly/chi",
+			"revision": "57ee7612d4405274628c71d1dc9455a12646f056",
+			"revisionTime": "2017-02-19T07:36:56Z"
+		}
+	],
+	"rootPath": "github.com/eriktate/go-twitch"
+}
